@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useData } from "../context/DataContext";
 import { toast } from "sonner";
 import { TrendingUp, AlertCircle, User, Calendar, ShoppingCart, Check, X } from "lucide-react";
+import { api } from "../../lib/api";
 
 export default function Prediction() {
   const { currentModel, addPrediction, predictions } = useData();
@@ -55,51 +56,25 @@ export default function Prediction() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handlePredict = () => {
-    // Validate inputs
-    if (!formData.customerId || !formData.age || !formData.gender || !formData.purchaseFrequency) {
-      toast.error("Harap lengkapi semua field");
-      return;
-    }
+  // Ganti bagian handlePredict di Prediction.tsx
 
-    // Mock prediction logic
-    const age = parseInt(formData.age);
-    const frequency = parseInt(formData.purchaseFrequency);
-    
-    let result = "Puas";
-    let probability = 0.75;
 
-    // Simple decision logic (mocking the decision tree)
-    if (frequency <= 10) {
-      if (age <= 30) {
-        result = "Tidak Puas";
-        probability = 0.72;
-      } else {
-        result = "Puas";
-        probability = 0.68;
-      }
-    } else {
-      result = "Puas";
-      probability = formData.gender === "female" ? 0.85 : 0.80;
-    }
+const handlePredict = async () => {
+  if (!currentModel) return;
 
-    // Add some randomness
-    probability += (Math.random() - 0.5) * 0.1;
-    probability = Math.max(0.5, Math.min(0.99, probability));
-
-    const prediction = {
-      id: `PRD${Date.now()}`,
-      inputData: { ...formData },
-      result,
-      probability,
-      createdDate: new Date().toLocaleString('id-ID'),
-    };
-
-    addPrediction(prediction);
-    setPredictionResult({ result, probability });
-    toast.success("Prediksi berhasil!");
-  };
-
+  try {
+    const result = await api.predict(currentModel.id, {
+      age: parseInt(formData.age),
+      gender: formData.gender === "M" ? 0 : 1,
+      purchase_frequency: parseInt(formData.purchaseFrequency),
+    });
+    setPredictionResult({ result: result.result, probability: result.probability });
+    // Simpan ke history
+    addPrediction({ id: Date.now().toString(), inputData: formData, ...result, createdDate: new Date().toLocaleString("id-ID") });
+  } catch (err: any) {
+    toast.error(err.message);
+  }
+};
   const handleReset = () => {
     setFormData({
       customerId: "",

@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
+import { api } from "../../lib/api";
 import {
   Star,
   Send,
@@ -65,10 +66,9 @@ export default function CustomerSurvey() {
     setFormData(prev => ({ ...prev, [category]: value.toString() }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.name || !formData.email || !formData.phone) {
       toast.error("Mohon lengkapi data diri Anda");
       return;
@@ -79,23 +79,15 @@ export default function CustomerSurvey() {
       return;
     }
 
-    // Save to localStorage (in real app, send to backend)
-    const surveys = JSON.parse(localStorage.getItem("customerSurveys") || "[]");
-    const newSurvey = {
-      ...formData,
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      ratings,
-    };
-    surveys.push(newSurvey);
-    localStorage.setItem("customerSurveys", JSON.stringify(surveys));
-
-    toast.success("Terima kasih atas penilaian Anda! Selamat menikmati hidangan kami 🍛");
-
-    // Navigate to history page
-    setTimeout(() => {
-      navigate("/customer-survey-history");
-    }, 1500);
+    try {
+      await api.submitSurvey({ ...formData, ratings });
+      toast.success("Terima kasih atas penilaian Anda! Selamat menikmati hidangan kami 🍛");
+      setTimeout(() => {
+        navigate("/customer-survey-history");
+      }, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menyimpan survey");
+    }
   };
 
   const RatingStars = ({
@@ -328,43 +320,19 @@ export default function CustomerSurvey() {
                   Penilaian Rumah Makan
                 </h3>
                 <div className="space-y-4">
-                  <RatingStars
-                    category="foodQuality"
-                    label="Rasa & Kualitas Makanan"
-                  />
-                  <RatingStars
-                    category="cleanliness"
-                    label="Kebersihan Tempat & Peralatan"
-                  />
-                  <RatingStars
-                    category="serviceSpeed"
-                    label="Kecepatan Pelayanan"
-                  />
-                  <RatingStars
-                    category="staffFriendliness"
-                    label="Keramahan Pegawai"
-                  />
-                  <RatingStars
-                    category="priceValue"
-                    label="Harga (Value for Money)"
-                  />
-                  <RatingStars
-                    category="menuVariety"
-                    label="Variasi Menu"
-                  />
-                  <RatingStars
-                    category="ambiance"
-                    label="Suasana Tempat Makan"
-                  />
+                  <RatingStars category="foodQuality" label="Rasa & Kualitas Makanan" />
+                  <RatingStars category="cleanliness" label="Kebersihan Tempat & Peralatan" />
+                  <RatingStars category="serviceSpeed" label="Kecepatan Pelayanan" />
+                  <RatingStars category="staffFriendliness" label="Keramahan Pegawai" />
+                  <RatingStars category="priceValue" label="Harga (Value for Money)" />
+                  <RatingStars category="menuVariety" label="Variasi Menu" />
+                  <RatingStars category="ambiance" label="Suasana Tempat Makan" />
                 </div>
               </div>
 
               {/* Overall Satisfaction */}
               <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <RatingStars
-                  category="overallSatisfaction"
-                  label="Kepuasan Keseluruhan *"
-                />
+                <RatingStars category="overallSatisfaction" label="Kepuasan Keseluruhan *" />
               </div>
 
               {/* Feedback */}

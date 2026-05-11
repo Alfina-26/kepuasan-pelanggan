@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
+import { api } from "../../lib/api";
 
 export type UserRole = "admin" | "developer" | "customer" | null;
 
@@ -9,7 +10,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -18,25 +19,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (username: string, password: string): boolean => {
-    // Mock authentication
-    const validUsers: { [key: string]: { password: string; role: UserRole } } = {
-      admin: { password: "admin123", role: "admin" },
-      developer: { password: "developer123", role: "developer" },
-      customer: { password: "customer123", role: "customer" },
-    };
-
-    const userCredentials = validUsers[username];
-
-    if (userCredentials && userCredentials.password === password) {
-      setUser({ username, role: userCredentials.role });
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const data = await api.login(username, password);
+      localStorage.setItem("token", data.access_token);
+      setUser({ username: data.username, role: data.role });
       return true;
+    } catch {
+      return false;
     }
-
-    return false;
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
     setUser(null);
   };
 
