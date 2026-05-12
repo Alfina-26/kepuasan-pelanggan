@@ -4,7 +4,7 @@ import joblib, pandas as pd
 
 router = APIRouter()
 
-from routes.training import models_store
+from state import models_store
 
 class PredictRequest(BaseModel):
     model_id: str

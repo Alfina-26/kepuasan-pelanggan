@@ -10,12 +10,14 @@ import {
   TrendingUp,
   Calendar,
   Eye,
-  Trash2,
   Download,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  User,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "../../lib/api";
 
 interface Survey {
   id: number;
@@ -43,23 +45,22 @@ export default function ManagerDashboard() {
   const navigate = useNavigate();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadSurveys();
   }, []);
 
-  const loadSurveys = () => {
-    const storedSurveys = JSON.parse(localStorage.getItem("customerSurveys") || "[]");
-    setSurveys(storedSurveys.sort((a: Survey, b: Survey) => b.id - a.id));
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus data survei ini?")) {
-      const updatedSurveys = surveys.filter(s => s.id !== id);
-      localStorage.setItem("customerSurveys", JSON.stringify(updatedSurveys));
-      setSurveys(updatedSurveys);
-      setSelectedSurvey(null);
-      toast.success("Data survei berhasil dihapus");
+  const loadSurveys = async () => {
+    setLoading(true);
+    try {
+      const res = await api.getAllSurveys();
+      const data: Survey[] = res.surveys || [];
+      setSurveys(data.sort((a, b) => b.id - a.id));
+    } catch {
+      setSurveys([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,14 +86,14 @@ export default function ManagerDashboard() {
       s.visitFrequency || "-",
       s.averageSpending || "-",
       s.favoriteMenu || "-",
-      s.ratings.foodQuality,
-      s.ratings.cleanliness,
-      s.ratings.serviceSpeed,
-      s.ratings.staffFriendliness,
-      s.ratings.priceValue,
-      s.ratings.menuVariety,
-      s.ratings.ambiance,
-      s.ratings.overallSatisfaction,
+      s.ratings?.foodQuality ?? 0,
+      s.ratings?.cleanliness ?? 0,
+      s.ratings?.serviceSpeed ?? 0,
+      s.ratings?.staffFriendliness ?? 0,
+      s.ratings?.priceValue ?? 0,
+      s.ratings?.menuVariety ?? 0,
+      s.ratings?.ambiance ?? 0,
+      s.ratings?.overallSatisfaction ?? 0,
       s.feedback || "-"
     ]);
 
@@ -112,7 +113,7 @@ export default function ManagerDashboard() {
 
   const calculateAverageRating = () => {
     if (surveys.length === 0) return 0;
-    const total = surveys.reduce((sum, s) => sum + s.ratings.overallSatisfaction, 0);
+    const total = surveys.reduce((sum, s) => sum + (s.ratings?.overallSatisfaction ?? 0), 0);
     return (total / surveys.length).toFixed(1);
   };
 
@@ -140,9 +141,7 @@ export default function ManagerDashboard() {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`w-4 h-4 ${
-            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-          }`}
+          className={`w-4 h-4 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
         />
       ))}
       <span className="ml-1 text-sm font-medium">{rating}/5</span>
@@ -150,23 +149,15 @@ export default function ManagerDashboard() {
   );
 
   const countBySatisfaction = () => {
-    const counts = {
-      sangatPuas: 0,
-      puas: 0,
-      cukup: 0,
-      kurangPuas: 0,
-      tidakPuas: 0
-    };
-
+    const counts = { sangatPuas: 0, puas: 0, cukup: 0, kurangPuas: 0, tidakPuas: 0 };
     surveys.forEach(s => {
-      const rating = s.ratings.overallSatisfaction;
+      const rating = s.ratings?.overallSatisfaction ?? 0;
       if (rating >= 4.5) counts.sangatPuas++;
       else if (rating >= 3.5) counts.puas++;
       else if (rating >= 2.5) counts.cukup++;
       else if (rating >= 1.5) counts.kurangPuas++;
       else counts.tidakPuas++;
     });
-
     return counts;
   };
 
@@ -181,11 +172,7 @@ export default function ManagerDashboard() {
             <h2 className="text-2xl font-semibold">Manajemen Survei Kepuasan Pelanggan</h2>
             <p className="text-gray-600 mt-1">Kelola dan analisa feedback pelanggan rumah makan</p>
           </div>
-          <Button
-            onClick={handleExportCSV}
-            variant="outline"
-            className="gap-2"
-          >
+          <Button onClick={handleExportCSV} variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             Export CSV
           </Button>
@@ -196,8 +183,7 @@ export default function ManagerDashboard() {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="w-5 h-5" />
-                Total Survei
+                <Users className="w-5 h-5" />Total Survei
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -209,8 +195,7 @@ export default function ManagerDashboard() {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Star className="w-5 h-5" />
-                Rata-rata Rating
+                <Star className="w-5 h-5" />Rata-rata Rating
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -222,8 +207,7 @@ export default function ManagerDashboard() {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5" />
-                Pelanggan Puas
+                <TrendingUp className="w-5 h-5" />Pelanggan Puas
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -239,8 +223,7 @@ export default function ManagerDashboard() {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <MessageSquare className="w-5 h-5" />
-                Ada Feedback
+                <MessageSquare className="w-5 h-5" />Ada Feedback
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -260,53 +243,44 @@ export default function ManagerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="text-2xl font-bold text-green-600">{satisfactionCounts.sangatPuas}</div>
-                <div className="text-xs text-gray-600 mt-1">Sangat Puas (4.5-5)</div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-2xl font-bold text-blue-600">{satisfactionCounts.puas}</div>
-                <div className="text-xs text-gray-600 mt-1">Puas (3.5-4.4)</div>
-              </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div className="text-2xl font-bold text-yellow-600">{satisfactionCounts.cukup}</div>
-                <div className="text-xs text-gray-600 mt-1">Cukup (2.5-3.4)</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <div className="text-2xl font-bold text-orange-600">{satisfactionCounts.kurangPuas}</div>
-                <div className="text-xs text-gray-600 mt-1">Kurang Puas (1.5-2.4)</div>
-              </div>
-              <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                <div className="text-2xl font-bold text-red-600">{satisfactionCounts.tidakPuas}</div>
-                <div className="text-xs text-gray-600 mt-1">Tidak Puas (1-1.4)</div>
-              </div>
+              {[
+                { count: satisfactionCounts.sangatPuas, label: "Sangat Puas (4.5-5)", bg: "bg-green-50", border: "border-green-200", text: "text-green-600" },
+                { count: satisfactionCounts.puas, label: "Puas (3.5-4.4)", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-600" },
+                { count: satisfactionCounts.cukup, label: "Cukup (2.5-3.4)", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-600" },
+                { count: satisfactionCounts.kurangPuas, label: "Kurang Puas (1.5-2.4)", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-600" },
+                { count: satisfactionCounts.tidakPuas, label: "Tidak Puas (1-1.4)", bg: "bg-red-50", border: "border-red-200", text: "text-red-600" },
+              ].map((item, i) => (
+                <div key={i} className={`text-center p-4 ${item.bg} rounded-lg border ${item.border}`}>
+                  <div className={`text-2xl font-bold ${item.text}`}>{item.count}</div>
+                  <div className="text-xs text-gray-600 mt-1">{item.label}</div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
         {/* Survey List */}
-        {surveys.length === 0 ? (
+        {loading ? (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="py-16 text-center text-gray-500">Memuat data...</CardContent>
+          </Card>
+        ) : surveys.length === 0 ? (
           <Card className="border-0 shadow-lg">
             <CardContent className="py-16 text-center">
               <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                Belum Ada Data Survei
-              </h3>
-              <p className="text-gray-500">
-                Data survei dari pelanggan akan muncul di sini
-              </p>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Belum Ada Data Survei</h3>
+              <p className="text-gray-500">Data survei dari pelanggan akan muncul di sini</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Survey List */}
+            {/* List */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Riwayat Survei ({surveys.length})</h3>
-              </div>
+              <h3 className="font-semibold text-lg">Riwayat Survei ({surveys.length})</h3>
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                 {surveys.map((survey) => {
-                  const satisfaction = getSatisfactionLevel(survey.ratings.overallSatisfaction);
+                  const rating = survey.ratings?.overallSatisfaction ?? 0;
+                  const satisfaction = getSatisfactionLevel(rating);
                   return (
                     <Card
                       key={survey.id}
@@ -333,42 +307,21 @@ export default function ManagerDashboard() {
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Rating:</span>
-                            <RatingDisplay rating={survey.ratings.overallSatisfaction} />
-                          </div>
-                          {survey.favoriteMenu && (
-                            <div className="text-xs text-gray-500">
-                              Menu: {survey.favoriteMenu}
-                            </div>
-                          )}
-                          <div className="flex gap-2 mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 text-xs h-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSurvey(survey);
-                              }}
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              Detail
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(survey.id);
-                              }}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Rating:</span>
+                          <RatingDisplay rating={rating} />
                         </div>
+                        {survey.favoriteMenu && (
+                          <div className="text-xs text-gray-500 mt-1">Menu: {survey.favoriteMenu}</div>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-3 text-xs h-8"
+                          onClick={(e) => { e.stopPropagation(); setSelectedSurvey(survey); }}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />Detail
+                        </Button>
                       </CardContent>
                     </Card>
                   );
@@ -376,7 +329,7 @@ export default function ManagerDashboard() {
               </div>
             </div>
 
-            {/* Survey Detail */}
+            {/* Detail */}
             <div className="lg:sticky lg:top-24 h-fit">
               {selectedSurvey ? (
                 <Card className="border-0 shadow-xl">
@@ -387,26 +340,22 @@ export default function ManagerDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4 max-h-[550px] overflow-y-auto">
-                    {/* Personal Info */}
                     <div>
                       <h4 className="font-semibold mb-2 text-sm">Data Pelanggan</h4>
                       <div className="space-y-1.5 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Nama:</span>
-                          <span className="font-medium">{selectedSurvey.name}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Email:</span>
-                          <span className="font-medium text-xs">{selectedSurvey.email}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Telepon:</span>
-                          <span className="font-medium">{selectedSurvey.phone}</span>
-                        </div>
+                        {[
+                          { label: "Nama", value: selectedSurvey.name },
+                          { label: "Email", value: selectedSurvey.email },
+                          { label: "Telepon", value: selectedSurvey.phone },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex justify-between">
+                            <span className="text-gray-600">{label}:</span>
+                            <span className="font-medium text-xs">{value}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Visit Info */}
                     {(selectedSurvey.visitFrequency || selectedSurvey.averageSpending || selectedSurvey.favoriteMenu) && (
                       <div className="pt-3 border-t">
                         <h4 className="font-semibold mb-2 text-sm">Informasi Kunjungan</h4>
@@ -433,65 +382,37 @@ export default function ManagerDashboard() {
                       </div>
                     )}
 
-                    {/* Ratings */}
                     <div className="pt-3 border-t">
                       <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        Penilaian Detail
+                        <Star className="w-4 h-4 text-yellow-500" />Penilaian Detail
                       </h4>
                       <div className="space-y-2.5">
-                        {selectedSurvey.ratings.foodQuality > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Rasa & Kualitas</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.foodQuality} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.cleanliness > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Kebersihan</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.cleanliness} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.serviceSpeed > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Kecepatan Layanan</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.serviceSpeed} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.staffFriendliness > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Keramahan Pegawai</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.staffFriendliness} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.priceValue > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Harga</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.priceValue} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.menuVariety > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Variasi Menu</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.menuVariety} />
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.ambiance > 0 && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Suasana</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.ambiance} />
-                          </div>
-                        )}
+                        {[
+                          { key: "foodQuality", label: "Rasa & Kualitas" },
+                          { key: "cleanliness", label: "Kebersihan" },
+                          { key: "serviceSpeed", label: "Kecepatan Layanan" },
+                          { key: "staffFriendliness", label: "Keramahan Pegawai" },
+                          { key: "priceValue", label: "Harga" },
+                          { key: "menuVariety", label: "Variasi Menu" },
+                          { key: "ambiance", label: "Suasana" },
+                        ].map(({ key, label }) => {
+                          const val = selectedSurvey.ratings?.[key as keyof typeof selectedSurvey.ratings] ?? 0;
+                          return val > 0 ? (
+                            <div key={key} className="flex justify-between items-center">
+                              <span className="text-xs text-gray-600">{label}</span>
+                              <RatingDisplay rating={val} />
+                            </div>
+                          ) : null;
+                        })}
                         <div className="pt-2 border-t">
                           <div className="flex justify-between items-center">
                             <span className="font-medium text-sm">Keseluruhan</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.overallSatisfaction} />
+                            <RatingDisplay rating={selectedSurvey.ratings?.overallSatisfaction ?? 0} />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Feedback */}
                     {selectedSurvey.feedback && (
                       <div className="pt-3 border-t">
                         <h4 className="font-semibold mb-2 text-sm">Saran & Kritik</h4>
@@ -500,28 +421,13 @@ export default function ManagerDashboard() {
                         </p>
                       </div>
                     )}
-
-                    {/* Actions */}
-                    <div className="pt-3 border-t">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleDelete(selectedSurvey.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Hapus Data Survei
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               ) : (
                 <Card className="border-0 shadow-lg">
                   <CardContent className="py-16 text-center">
                     <Eye className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Pilih Survei
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Pilih Survei</h3>
                     <p className="text-gray-500 text-sm">
                       Klik pada survei di sebelah kiri untuk melihat detailnya
                     </p>

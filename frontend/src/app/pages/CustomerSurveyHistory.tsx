@@ -4,17 +4,17 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+import { api } from "../../lib/api";
+import { useAuth } from "../context/AuthContext";
 import {
   ClipboardList,
   Calendar,
   Star,
   MessageSquare,
-  Trash2,
   Eye,
   Plus,
   UtensilsCrossed
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface Survey {
   id: number;
@@ -44,25 +44,36 @@ interface Survey {
 
 export default function CustomerSurveyHistory() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadSurveys();
-  }, []);
+  }, [user]);
 
-  const loadSurveys = () => {
-    const storedSurveys = JSON.parse(localStorage.getItem("customerSurveys") || "[]");
-    setSurveys(storedSurveys.sort((a: Survey, b: Survey) => b.id - a.id));
-  };
+  const loadSurveys = async () => {
+    setLoading(true);
+    try {
+      // Ambil semua survey lalu filter berdasarkan email user yang login
+      const res = await api.getAllSurveys();
+      const allSurveys: Survey[] = res.surveys || [];
+      
+      // Filter berdasarkan email atau nama user yang login
+      const mySurveys = user?.username
+        ? allSurveys.filter(
+            (s) =>
+              s.email === user.username ||
+              s.name?.toLowerCase().includes(user.username.toLowerCase())
+          )
+        : allSurveys;
 
-  const handleDelete = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus penilaian ini?")) {
-      const updatedSurveys = surveys.filter(s => s.id !== id);
-      localStorage.setItem("customerSurveys", JSON.stringify(updatedSurveys));
-      setSurveys(updatedSurveys);
-      setSelectedSurvey(null);
-      toast.success("Penilaian berhasil dihapus");
+      setSurveys(mySurveys.sort((a, b) => b.id - a.id));
+    } catch (err) {
+      setSurveys([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,7 +92,7 @@ export default function CustomerSurveyHistory() {
       month: "long",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -106,13 +117,12 @@ export default function CustomerSurveyHistory() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-2xl font-semibold">Riwayat Penilaian Anda</h2>
-            <p className="text-gray-600 mt-1">Total {surveys.length} kali memberikan penilaian</p>
+            <p className="text-gray-600 mt-1">
+              Total {surveys.length} kali memberikan penilaian
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/customer")}
-            >
+            <Button variant="outline" onClick={() => navigate("/customer")}>
               Kembali ke Dashboard
             </Button>
             <Button
@@ -125,7 +135,13 @@ export default function CustomerSurveyHistory() {
           </div>
         </div>
 
-        {surveys.length === 0 ? (
+        {loading ? (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="py-16 text-center text-gray-500">
+              Memuat data...
+            </CardContent>
+          </Card>
+        ) : surveys.length === 0 ? (
           <Card className="border-0 shadow-lg">
             <CardContent className="py-16 text-center">
               <UtensilsCrossed className="w-16 h-16 mx-auto text-gray-400 mb-4" />
@@ -150,7 +166,11 @@ export default function CustomerSurveyHistory() {
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Daftar Penilaian</h3>
               {surveys.map((survey) => {
-                const satisfaction = getSatisfactionLevel(survey.ratings.overallSatisfaction);
+                const overallRating =
+                  survey.ratings?.overallSatisfaction ??
+                  (survey as any).overallSatisfaction ??
+                  0;
+                const satisfaction = getSatisfactionLevel(overallRating);
                 return (
                   <Card
                     key={survey.id}
@@ -180,7 +200,7 @@ export default function CustomerSurveyHistory() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">Kepuasan Keseluruhan:</span>
-                          <RatingDisplay rating={survey.ratings.overallSatisfaction} />
+                          <RatingDisplay rating={overallRating} />
                         </div>
                         {survey.visitFrequency && (
                           <div className="text-xs text-gray-500">
@@ -199,17 +219,6 @@ export default function CustomerSurveyHistory() {
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Detail
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(survey.id);
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
@@ -313,66 +322,27 @@ export default function CustomerSurveyHistory() {
                         Penilaian
                       </h4>
                       <div className="space-y-3">
-                        {selectedSurvey.ratings.foodQuality > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Rasa & Kualitas Makanan</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.foodQuality} />
+                        {[
+                          { key: "foodQuality", label: "Rasa & Kualitas Makanan" },
+                          { key: "cleanliness", label: "Kebersihan Tempat & Peralatan" },
+                          { key: "serviceSpeed", label: "Kecepatan Pelayanan" },
+                          { key: "staffFriendliness", label: "Keramahan Pegawai" },
+                          { key: "priceValue", label: "Harga (Value for Money)" },
+                          { key: "menuVariety", label: "Variasi Menu" },
+                          { key: "ambiance", label: "Suasana Tempat Makan" },
+                        ].map(({ key, label }) => {
+                          const val = selectedSurvey.ratings?.[key as keyof typeof selectedSurvey.ratings] ?? 0;
+                          return val > 0 ? (
+                            <div key={key} className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">{label}</span>
+                              <RatingDisplay rating={val} />
                             </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.cleanliness > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Kebersihan Tempat & Peralatan</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.cleanliness} />
-                            </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.serviceSpeed > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Kecepatan Pelayanan</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.serviceSpeed} />
-                            </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.staffFriendliness > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Keramahan Pegawai</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.staffFriendliness} />
-                            </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.priceValue > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Harga (Value for Money)</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.priceValue} />
-                            </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.menuVariety > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Variasi Menu</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.menuVariety} />
-                            </div>
-                          </div>
-                        )}
-                        {selectedSurvey.ratings.ambiance > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm text-gray-600">Suasana Tempat Makan</span>
-                              <RatingDisplay rating={selectedSurvey.ratings.ambiance} />
-                            </div>
-                          </div>
-                        )}
+                          ) : null;
+                        })}
                         <div className="pt-3 border-t">
                           <div className="flex justify-between items-center">
                             <span className="font-medium">Kepuasan Keseluruhan</span>
-                            <RatingDisplay rating={selectedSurvey.ratings.overallSatisfaction} />
+                            <RatingDisplay rating={selectedSurvey.ratings?.overallSatisfaction ?? 0} />
                           </div>
                         </div>
                       </div>
@@ -387,27 +357,13 @@ export default function CustomerSurveyHistory() {
                         </p>
                       </div>
                     )}
-
-                    {/* Actions */}
-                    <div className="pt-4 border-t">
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        onClick={() => handleDelete(selectedSurvey.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Hapus Penilaian
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
               ) : (
                 <Card className="border-0 shadow-lg">
                   <CardContent className="py-16 text-center">
                     <Eye className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      Pilih Penilaian
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Pilih Penilaian</h3>
                     <p className="text-gray-500">
                       Klik pada penilaian di sebelah kiri untuk melihat detailnya
                     </p>

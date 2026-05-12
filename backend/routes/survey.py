@@ -1,8 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Optional
-from database import get_db
+from typing import Optional, Any
 from datetime import datetime
 
 router = APIRouter()
@@ -11,22 +9,24 @@ class SurveyRequest(BaseModel):
     name: str
     email: str
     phone: str
-    age: int
-    gender: str
+    age: Optional[Any] = None
+    gender: Optional[str] = None
     location: Optional[str] = None
-    visit_frequency: Optional[str] = None
-    average_spending: Optional[str] = None
-    food_quality: int       # rating 1-5
-    cleanliness: int
-    service_speed: int
-    staff_friendliness: int
-    price_value: int
-    menu_variety: int
-    ambiance: int
-    overall_satisfaction: int
+    visitFrequency: Optional[str] = None
+    averageSpending: Optional[str] = None
+    favoriteMenu: Optional[str] = None
+    visitTime: Optional[str] = None
+    foodQuality: Optional[Any] = None
+    cleanliness: Optional[Any] = None
+    serviceSpeed: Optional[Any] = None
+    staffFriendliness: Optional[Any] = None
+    priceValue: Optional[Any] = None
+    menuVariety: Optional[Any] = None
+    ambiance: Optional[Any] = None
+    overallSatisfaction: Optional[Any] = None
     feedback: Optional[str] = None
+    ratings: Optional[Any] = None
 
-# Simpan ke list sementara (ganti dengan database di produksi)
 survey_data = []
 
 @router.post("/submit")

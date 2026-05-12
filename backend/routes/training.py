@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from ml.trainer import train_model
+from state import datasets_store, models_store
 
 router = APIRouter()
 
@@ -11,25 +12,23 @@ class TrainRequest(BaseModel):
     max_depth: int = 10
     min_samples_split: int = 2
 
-# Import datasets_store dari dataset.py
-from routes.dataset import datasets_store
-models_store = []
-
 @router.post("/start")
 def start_training(body: TrainRequest):
     dataset = next((d for d in datasets_store if d["id"] == body.dataset_id), None)
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset tidak ditemukan")
-    
-    result = train_model(
-        file_path=dataset["file_path"],
-        target_column=body.target_column,
-        test_size=body.test_size,
-        max_depth=body.max_depth,
-        min_samples_split=body.min_samples_split,
-    )
-    models_store.append(result)
-    return {"message": "Model berhasil dilatih", "model": result}
+    try:
+        result = train_model(
+            file_path=dataset["file_path"],
+            target_column=body.target_column,
+            test_size=body.test_size,
+            max_depth=body.max_depth,
+            min_samples_split=body.min_samples_split,
+        )
+        models_store.append(result)
+        return {"message": "Model berhasil dilatih", "model": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/models")
 def get_models():

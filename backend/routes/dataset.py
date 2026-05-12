@@ -6,7 +6,7 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-datasets_store = []
+from state import datasets_store
 
 @router.post("/upload")
 async def upload_dataset(file: UploadFile = File(...)):
