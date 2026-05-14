@@ -1,20 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import DashboardLayout from "../components/DashboardLayout";
+// Kita tidak pakai DashboardLayout lagi, kita buat layoutnya di sini
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
+// @ts-ignore
+import makanan1 from "../../assets/makanan1.jpg";
 import {
   Users,
   Star,
   TrendingUp,
-  Calendar,
   Eye,
   Download,
   BarChart3,
   MessageSquare,
-  User,
-  Trash2
+  ClipboardList,
+  LogOut // Ditambah untuk tombol logout
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
@@ -107,7 +108,6 @@ export default function ManagerDashboard() {
     link.href = URL.createObjectURL(blob);
     link.download = `survei-kepuasan-${Date.now()}.csv`;
     link.click();
-
     toast.success("Data berhasil di-export!");
   };
 
@@ -126,27 +126,14 @@ export default function ManagerDashboard() {
   };
 
   const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString("id-ID", {
+    return new Date(timestamp).toLocaleDateString("id-ID", {
       day: "numeric",
-      month: "short",
+      month: "long",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit"
     });
   };
-
-  const RatingDisplay = ({ rating }: { rating: number }) => (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`w-4 h-4 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-        />
-      ))}
-      <span className="ml-1 text-sm font-medium">{rating}/5</span>
-    </div>
-  );
 
   const countBySatisfaction = () => {
     const counts = { sangatPuas: 0, puas: 0, cukup: 0, kurangPuas: 0, tidakPuas: 0 };
@@ -164,280 +151,184 @@ export default function ManagerDashboard() {
   const satisfactionCounts = countBySatisfaction();
 
   return (
-    <DashboardLayout title="Dashboard Admin">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold">Manajemen Survei Kepuasan Pelanggan</h2>
-            <p className="text-gray-600 mt-1">Kelola dan analisa feedback pelanggan rumah makan</p>
+    <div className="min-h-screen bg-[#FDFCFB]">
+      {/* 1. HEADER ATAS (PENGGANTI GARPU MERAH) */}
+      <header className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {/* GAMBAR NASI PADANG SEBAGAI LOGO DI POJOK KIRI */}
+            <div className="h-10 w-10 rounded-xl overflow-hidden shadow-sm border border-orange-100">
+              <img src={makanan1} alt="Logo" className="h-full w-full object-cover" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-orange-900 leading-tight">Rumah Makan Nasi Padang</h1>
+              <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Admin Dashboard</p>
+            </div>
           </div>
-          <Button onClick={handleExportCSV} variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export CSV
+          <div className="flex items-center gap-4">
+             <div className="text-right hidden md:block">
+                <p className="text-xs font-bold text-gray-800">admin</p>
+                <p className="text-[10px] text-gray-400">Admin</p>
+             </div>
+             <Button variant="outline" size="sm" className="rounded-xl border-gray-200 gap-2 text-gray-600 font-bold" onClick={() => navigate('/login')}>
+                <LogOut className="w-4 h-4" /> Logout
+             </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto p-6 md:p-8 space-y-8">
+        
+        {/* 2. HEADER DASHBOARD SECTION */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-5">
+            {/* GAMBAR NASI PADANG DI DALAM PANEL */}
+            <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-md border-2 border-[#F5A623] flex-shrink-0">
+              <img src={makanan1} alt="Admin Logo" className="h-full w-full object-cover" />
+            </div>
+            <div>
+              {/* JUDUL ADMIN SURVEY SESUAI PERMINTAAN */}
+              <h2 className="text-2xl font-black text-[#333] tracking-tight uppercase">Admin Survey</h2>
+              <p className="text-sm text-gray-500 font-medium italic">"Rumah Makan Nasi Padang - Cita Rasa Otentik"</p>
+            </div>
+          </div>
+          <Button 
+            onClick={handleExportCSV} 
+            className="bg-[#F5A623] hover:bg-[#d98c1d] rounded-2xl shadow-lg shadow-orange-100 font-bold gap-2 px-8 h-12"
+          >
+            <Download className="w-4 h-4" /> Export Laporan (.CSV)
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="w-5 h-5" />Total Survei
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{surveys.length}</p>
-              <p className="text-xs opacity-90 mt-1">Responden</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Star className="w-5 h-5" />Rata-rata Rating
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{calculateAverageRating()}</p>
-              <p className="text-xs opacity-90 mt-1">Dari skala 5</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5" />Pelanggan Puas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {surveys.length > 0
-                  ? Math.round(((satisfactionCounts.sangatPuas + satisfactionCounts.puas) / surveys.length) * 100)
-                  : 0}%
-              </p>
-              <p className="text-xs opacity-90 mt-1">Rating ≥ 3.5</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MessageSquare className="w-5 h-5" />Ada Feedback
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {surveys.filter(s => s.feedback && s.feedback.trim() !== "").length}
-              </p>
-              <p className="text-xs opacity-90 mt-1">Saran & Kritik</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            { label: "Total Survei", val: surveys.length, sub: "Responden", icon: Users, color: "from-orange-400 to-[#F5A623]" },
+            { label: "Rata-rata Rating", val: calculateAverageRating(), sub: "Skala 5.0", icon: Star, color: "from-amber-400 to-amber-500" },
+            { label: "Tingkat Kepuasan", val: `${surveys.length > 0 ? Math.round(((satisfactionCounts.sangatPuas + satisfactionCounts.puas) / surveys.length) * 100) : 0}%`, sub: "Rating ≥ 3.5", icon: TrendingUp, color: "from-emerald-400 to-emerald-500" },
+            { label: "Ulasan Teks", val: surveys.filter(s => s.feedback?.trim()).length, sub: "Saran & Kritik", icon: MessageSquare, color: "from-blue-400 to-blue-500" },
+          ].map((stat, i) => (
+            <Card key={i} className="border-none shadow-md overflow-hidden rounded-[28px]">
+              <div className={`h-1.5 bg-gradient-to-r ${stat.color}`}></div>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                    <h3 className="text-3xl font-black text-[#333]">{stat.val}</h3>
+                    <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase">{stat.sub}</p>
+                  </div>
+                  <div className="bg-gray-50 p-2.5 rounded-xl text-gray-400">
+                    <stat.icon className="w-5 h-5" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Satisfaction Distribution */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Distribusi Kepuasan Pelanggan</CardTitle>
-            <CardDescription>Breakdown tingkat kepuasan berdasarkan rating</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[
-                { count: satisfactionCounts.sangatPuas, label: "Sangat Puas (4.5-5)", bg: "bg-green-50", border: "border-green-200", text: "text-green-600" },
-                { count: satisfactionCounts.puas, label: "Puas (3.5-4.4)", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-600" },
-                { count: satisfactionCounts.cukup, label: "Cukup (2.5-3.4)", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-600" },
-                { count: satisfactionCounts.kurangPuas, label: "Kurang Puas (1.5-2.4)", bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-600" },
-                { count: satisfactionCounts.tidakPuas, label: "Tidak Puas (1-1.4)", bg: "bg-red-50", border: "border-red-200", text: "text-red-600" },
-              ].map((item, i) => (
-                <div key={i} className={`text-center p-4 ${item.bg} rounded-lg border ${item.border}`}>
-                  <div className={`text-2xl font-bold ${item.text}`}>{item.count}</div>
-                  <div className="text-xs text-gray-600 mt-1">{item.label}</div>
-                </div>
-              ))}
+        {/* Daftar & Detail */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-5 space-y-4">
+            <div className="flex items-center gap-2 px-2 text-[#F5A623]">
+               <ClipboardList className="w-5 h-5" />
+               <h3 className="font-bold text-lg text-gray-800">Daftar Masukan Terbaru</h3>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Survey List */}
-        {loading ? (
-          <Card className="border-0 shadow-lg">
-            <CardContent className="py-16 text-center text-gray-500">Memuat data...</CardContent>
-          </Card>
-        ) : surveys.length === 0 ? (
-          <Card className="border-0 shadow-lg">
-            <CardContent className="py-16 text-center">
-              <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Belum Ada Data Survei</h3>
-              <p className="text-gray-500">Data survei dari pelanggan akan muncul di sini</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* List */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Riwayat Survei ({surveys.length})</h3>
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                {surveys.map((survey) => {
-                  const rating = survey.ratings?.overallSatisfaction ?? 0;
-                  const satisfaction = getSatisfactionLevel(rating);
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {loading ? (
+                <div className="py-20 text-center text-gray-400">Memuat data...</div>
+              ) : surveys.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                   <p className="text-gray-400 font-medium">Belum ada data masuk</p>
+                </div>
+              ) : (
+                surveys.map((survey) => {
+                  const satisfaction = getSatisfactionLevel(survey.ratings?.overallSatisfaction ?? 0);
+                  const isActive = selectedSurvey?.id === survey.id;
                   return (
                     <Card
                       key={survey.id}
-                      className={`border-0 shadow hover:shadow-lg transition-all cursor-pointer ${
-                        selectedSurvey?.id === survey.id ? "ring-2 ring-orange-500" : ""
+                      className={`cursor-pointer transition-all border-2 rounded-2xl ${
+                        isActive ? "border-[#F5A623] bg-orange-50/40 shadow-sm" : "border-transparent bg-white hover:border-gray-100 shadow-sm"
                       }`}
                       onClick={() => setSelectedSurvey(survey)}
                     >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-base flex items-center gap-2">
-                              <User className="w-4 h-4 text-gray-500" />
-                              {survey.name}
-                            </CardTitle>
-                            <CardDescription className="text-xs mt-1">
-                              <Calendar className="w-3 h-3 inline mr-1" />
-                              {formatDate(survey.timestamp)}
-                            </CardDescription>
-                          </div>
-                          <Badge className={`${satisfaction.color} text-white border-0 text-xs`}>
+                      <CardContent className="p-5">
+                        <div className="flex justify-between items-start mb-3">
+                          <Badge className={`${satisfaction.color} text-white border-none px-3 py-0.5 rounded-lg text-[10px] font-bold`}>
                             {satisfaction.label}
                           </Badge>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase">
+                            {new Date(survey.timestamp).toLocaleDateString()}
+                          </span>
                         </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Rating:</span>
-                          <RatingDisplay rating={rating} />
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-[#F5A623] font-bold">
+                            {survey.name.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-800 leading-none">{survey.name}</h4>
+                            <p className="text-xs text-gray-400 mt-1">{survey.favoriteMenu || "Menu Favorit"}</p>
+                          </div>
                         </div>
-                        {survey.favoriteMenu && (
-                          <div className="text-xs text-gray-500 mt-1">Menu: {survey.favoriteMenu}</div>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full mt-3 text-xs h-8"
-                          onClick={(e) => { e.stopPropagation(); setSelectedSurvey(survey); }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />Detail
-                        </Button>
                       </CardContent>
                     </Card>
                   );
-                })}
-              </div>
-            </div>
-
-            {/* Detail */}
-            <div className="lg:sticky lg:top-24 h-fit">
-              {selectedSurvey ? (
-                <Card className="border-0 shadow-xl">
-                  <CardHeader className="bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-t-lg">
-                    <CardTitle className="text-lg">Detail Survei</CardTitle>
-                    <CardDescription className="text-white/90 text-sm">
-                      {formatDate(selectedSurvey.timestamp)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4 max-h-[550px] overflow-y-auto">
-                    <div>
-                      <h4 className="font-semibold mb-2 text-sm">Data Pelanggan</h4>
-                      <div className="space-y-1.5 text-sm">
-                        {[
-                          { label: "Nama", value: selectedSurvey.name },
-                          { label: "Email", value: selectedSurvey.email },
-                          { label: "Telepon", value: selectedSurvey.phone },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="flex justify-between">
-                            <span className="text-gray-600">{label}:</span>
-                            <span className="font-medium text-xs">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {(selectedSurvey.visitFrequency || selectedSurvey.averageSpending || selectedSurvey.favoriteMenu) && (
-                      <div className="pt-3 border-t">
-                        <h4 className="font-semibold mb-2 text-sm">Informasi Kunjungan</h4>
-                        <div className="space-y-1.5 text-sm">
-                          {selectedSurvey.visitFrequency && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Frekuensi:</span>
-                              <span className="font-medium text-xs">{selectedSurvey.visitFrequency}</span>
-                            </div>
-                          )}
-                          {selectedSurvey.averageSpending && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Pengeluaran:</span>
-                              <span className="font-medium text-xs">{selectedSurvey.averageSpending}</span>
-                            </div>
-                          )}
-                          {selectedSurvey.favoriteMenu && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Menu Favorit:</span>
-                              <span className="font-medium text-xs">{selectedSurvey.favoriteMenu}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-3 border-t">
-                      <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
-                        <Star className="w-4 h-4 text-yellow-500" />Penilaian Detail
-                      </h4>
-                      <div className="space-y-2.5">
-                        {[
-                          { key: "foodQuality", label: "Rasa & Kualitas" },
-                          { key: "cleanliness", label: "Kebersihan" },
-                          { key: "serviceSpeed", label: "Kecepatan Layanan" },
-                          { key: "staffFriendliness", label: "Keramahan Pegawai" },
-                          { key: "priceValue", label: "Harga" },
-                          { key: "menuVariety", label: "Variasi Menu" },
-                          { key: "ambiance", label: "Suasana" },
-                        ].map(({ key, label }) => {
-                          const val = selectedSurvey.ratings?.[key as keyof typeof selectedSurvey.ratings] ?? 0;
-                          return val > 0 ? (
-                            <div key={key} className="flex justify-between items-center">
-                              <span className="text-xs text-gray-600">{label}</span>
-                              <RatingDisplay rating={val} />
-                            </div>
-                          ) : null;
-                        })}
-                        <div className="pt-2 border-t">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium text-sm">Keseluruhan</span>
-                            <RatingDisplay rating={selectedSurvey.ratings?.overallSatisfaction ?? 0} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {selectedSurvey.feedback && (
-                      <div className="pt-3 border-t">
-                        <h4 className="font-semibold mb-2 text-sm">Saran & Kritik</h4>
-                        <p className="text-xs text-gray-700 bg-orange-50 p-3 rounded-lg border border-orange-200">
-                          {selectedSurvey.feedback}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="py-16 text-center">
-                    <Eye className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Pilih Survei</h3>
-                    <p className="text-gray-500 text-sm">
-                      Klik pada survei di sebelah kiri untuk melihat detailnya
-                    </p>
-                  </CardContent>
-                </Card>
+                })
               )}
             </div>
           </div>
-        )}
-      </div>
-    </DashboardLayout>
+
+          <div className="lg:col-span-7">
+            {selectedSurvey ? (
+              <Card className="border-none shadow-2xl rounded-[32px] overflow-hidden sticky top-28 animate-in fade-in slide-in-from-bottom-4">
+                <div className="h-2 bg-[#F5A623]"></div>
+                <CardHeader className="bg-white pb-4 border-b border-gray-50">
+                   <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-2xl font-black text-[#333]">Detail Responden</CardTitle>
+                      <CardDescription className="font-bold text-orange-500 uppercase text-[10px]">#SRV-{selectedSurvey.id}</CardDescription>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Waktu</p>
+                       <p className="text-xs font-bold text-gray-600">{formatDate(selectedSurvey.timestamp)}</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8 max-h-[550px] overflow-y-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-gray-50 rounded-3xl">
+                    {[
+                      { label: "Nama Lengkap", val: selectedSurvey.name },
+                      { label: "Email", val: selectedSurvey.email },
+                      { label: "No. Telepon", val: selectedSurvey.phone },
+                      { label: "Frekuensi", val: selectedSurvey.visitFrequency || "-" },
+                      { label: "Pengeluaran", val: selectedSurvey.averageSpending || "-" },
+                      { label: "Menu Favorit", val: selectedSurvey.favoriteMenu || "-" },
+                    ].map((item, idx) => (
+                      <div key={idx}>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{item.label}</p>
+                        <p className="text-sm font-bold text-gray-700">{item.val}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                       Komentar Pelanggan
+                    </h4>
+                    <div className="p-6 bg-orange-50/50 border border-orange-100/50 rounded-2xl italic text-gray-700 text-sm leading-relaxed shadow-inner">
+                      "{selectedSurvey.feedback || "Tidak ada komentar tertulis."}"
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-gray-50/50 rounded-[40px] border-2 border-dashed border-gray-200 text-gray-300">
+                <Eye className="w-12 h-12 mb-4 opacity-20" />
+                <p className="font-bold">Pilih data untuk melihat detail</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

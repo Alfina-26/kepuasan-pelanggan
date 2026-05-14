@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import Root from "./pages/Root";
 import Login from "./pages/Login";
+import Register from "./pages/register"; // ← TAMBAH INI
 import AdminDashboard from "./pages/ManagerDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
@@ -20,6 +21,8 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: Login },
+      { path: "login", Component: Login },
+      { path: "register", Component: Register }, // ← TAMBAH INI
       { path: "admin", Component: AdminDashboard },
       { path: "developer", Component: DeveloperDashboard },
       { path: "customer", Component: CustomerDashboard },

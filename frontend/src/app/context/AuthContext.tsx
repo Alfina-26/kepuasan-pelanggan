@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
+  register: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -30,13 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const data = await api.register(username, password);
+      localStorage.setItem("token", data.access_token);
+      setUser({ username: data.username, role: data.role });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

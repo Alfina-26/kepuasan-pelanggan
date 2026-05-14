@@ -3,9 +3,18 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { useData } from "../context/DataContext";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
-import { FileText, Download, TrendingUp, Users, Brain, Target } from "lucide-react";
+import { 
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  LineChart, Line 
+} from "recharts";
+import { 
+  FileText, Download, TrendingUp, Users, Brain, 
+  Target, ChevronLeft, LogOut, Sparkles 
+} from "lucide-react";
 import { toast } from "sonner";
+// @ts-ignore
+import makanan1 from "../../assets/makanan1.jpg";
 
 export default function Reports() {
   const { predictions, currentModel, models } = useData();
@@ -15,12 +24,12 @@ export default function Reports() {
     {
       name: "Puas",
       value: predictions.filter(p => p.result === "Puas").length,
-      color: "#10b981",
+      color: "#10B981", // Emerald-500
     },
     {
       name: "Tidak Puas",
       value: predictions.filter(p => p.result === "Tidak Puas").length,
-      color: "#ef4444",
+      color: "#EF4444", // Red-500
     },
   ];
 
@@ -32,7 +41,6 @@ export default function Reports() {
     f1Score: model.f1Score * 100,
   }));
 
-  // Mock time series data
   const timeSeriesData = [
     { month: "Jan", puas: 65, tidakPuas: 35 },
     { month: "Feb", puas: 68, tidakPuas: 32 },
@@ -42,13 +50,8 @@ export default function Reports() {
     { month: "Jun", puas: 82, tidakPuas: 18 },
   ];
 
-  const handleExportPDF = () => {
-    toast.success("Laporan PDF berhasil di-export!");
-  };
-
-  const handleExportExcel = () => {
-    toast.success("Laporan Excel berhasil di-export!");
-  };
+  const handleExportPDF = () => toast.success("Laporan PDF sedang disiapkan...");
+  const handleExportExcel = () => toast.success("Data Excel berhasil diunduh!");
 
   const totalPredictions = predictions.length;
   const satisfiedRate = totalPredictions > 0 
@@ -56,261 +59,199 @@ export default function Reports() {
     : 0;
 
   return (
-    <DashboardLayout title="Laporan Analitik">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with Export Buttons */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-purple-50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Laporan Komprehensif
-                </CardTitle>
-                <CardDescription>
-                  Analisis lengkap performa sistem dan prediksi kepuasan pelanggan
-                </CardDescription>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={handleExportPDF} variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button onClick={handleExportExcel} variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Excel
-                </Button>
-              </div>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      {/* HEADER - CONSISTENT BRANDING */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-md ring-2 ring-orange-50">
+              <img src={makanan1} alt="Logo Padang" className="h-full w-full object-cover" />
             </div>
-          </CardHeader>
-        </Card>
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Rumah Makan Nasi Padang</h1>
+              <p className="text-xs text-orange-600 font-bold uppercase tracking-[0.2em]">Analytical Reports</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+             <Button variant="ghost" className="rounded-xl gap-2 font-bold text-gray-500" onClick={() => navigate(-1)}>
+                <ChevronLeft className="w-4 h-4" /> Kembali
+             </Button>
+             <Button variant="outline" className="rounded-xl border-gray-200 gap-2 font-bold text-red-600 hover:bg-red-50" onClick={() => navigate('/login')}>
+                <LogOut className="w-4 h-4" /> Logout
+             </Button>
+          </div>
+        </div>
+      </header>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="w-5 h-5" />
-                Total Prediksi
-              </CardTitle>
+      <main className="max-w-7xl mx-auto p-6 md:py-12 space-y-8">
+        
+        {/* ACTION HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+              Laporan Komprehensif <Sparkles className="w-6 h-6 text-orange-500" />
+            </h2>
+            <p className="text-gray-500 font-medium">Monitoring performa model dan tren kepuasan pelanggan secara real-time.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={handleExportPDF} variant="outline" className="rounded-2xl border-gray-200 bg-white font-bold h-12 px-6 hover:shadow-md transition-all">
+              <Download className="w-4 h-4 mr-2 text-red-500" /> Export PDF
+            </Button>
+            <Button onClick={handleExportExcel} variant="outline" className="rounded-2xl border-gray-200 bg-white font-bold h-12 px-6 hover:shadow-md transition-all">
+              <Download className="w-4 h-4 mr-2 text-green-600" /> Export Excel
+            </Button>
+          </div>
+        </div>
+
+        {/* SUMMARY STATS - FLOATING CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: "Total Prediksi", val: totalPredictions, sub: "Data Dianalisis", icon: Users, color: "bg-blue-600" },
+            { label: "Kepuasan", val: `${satisfiedRate.toFixed(1)}%`, sub: "Pelanggan Puas", icon: Target, color: "bg-emerald-600" },
+            { label: "Model Aktif", val: models.length, sub: "Tersimpan", icon: Brain, color: "bg-purple-600" },
+            { label: "Avg. Accuracy", val: `${models.length > 0 ? ((models.reduce((s, m) => s + m.accuracy, 0) / models.length) * 100).toFixed(1) : 0}%`, sub: "Sangat Stabil", icon: TrendingUp, color: "bg-orange-600" }
+          ].map((item, i) => (
+            <Card key={i} className="border-none shadow-[0_10px_40px_rgba(0,0,0,0.03)] rounded-[2rem] overflow-hidden group hover:scale-[1.02] transition-transform">
+              <CardContent className="p-0">
+                <div className={`p-6 ${item.color} text-white`}>
+                  <item.icon className="w-8 h-8 opacity-20 absolute right-6 top-6" />
+                  <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">{item.label}</p>
+                  <p className="text-3xl font-black">{item.val}</p>
+                </div>
+                <div className="p-4 bg-white">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">{item.sub}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* CHARTS SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Performance Comparison - Bar Chart */}
+          <Card className="lg:col-span-8 border-none shadow-sm bg-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="p-8">
+              <CardTitle className="text-xl font-black text-gray-800 tracking-tight">Perbandingan Performa Model</CardTitle>
+              <CardDescription className="font-medium text-gray-400 uppercase text-[10px] tracking-widest">Model Evaluation Metrics</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{totalPredictions}</p>
-              <p className="text-sm opacity-90 mt-1">Pelanggan dianalisis</p>
+            <CardContent className="px-8 pb-8">
+              <div className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={modelPerformanceData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12, fontWeight: 700}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
+                    <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                    <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
+                    <Bar dataKey="accuracy" fill="#3B82F6" radius={[6, 6, 0, 0]} name="Akurasi" />
+                    <Bar dataKey="precision" fill="#8B5CF6" radius={[6, 6, 0, 0]} name="Presisi" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Target className="w-5 h-5" />
-                Tingkat Kepuasan
-              </CardTitle>
+          {/* Distribution - Pie Chart */}
+          <Card className="lg:col-span-4 border-none shadow-sm bg-white rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="p-8 text-center">
+              <CardTitle className="text-xl font-black text-gray-800 tracking-tight">Distribusi Hasil</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{satisfiedRate.toFixed(1)}%</p>
-              <p className="text-sm opacity-90 mt-1">Pelanggan puas</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Brain className="w-5 h-5" />
-                Model Terlatih
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{models.length}</p>
-              <p className="text-sm opacity-90 mt-1">Total model</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5" />
-                Akurasi Rata-rata
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {models.length > 0 
-                  ? ((models.reduce((sum, m) => sum + m.accuracy, 0) / models.length) * 100).toFixed(1) 
-                  : 0}%
-              </p>
-              <p className="text-sm opacity-90 mt-1">Performance metrics</p>
+            <CardContent className="px-8 pb-8">
+              <div className="h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={satisfactionData}
+                      innerRadius={80}
+                      outerRadius={110}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {satisfactionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex justify-center gap-6 mt-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <span className="text-xs font-bold text-gray-600">Puas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-xs font-bold text-gray-600">Tidak Puas</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Satisfaction Distribution */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Distribusi Kepuasan Pelanggan</CardTitle>
-              <CardDescription>
-                Perbandingan pelanggan puas dan tidak puas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {totalPredictions > 0 ? (
-                <div className="h-80">
+        {/* TREND & INSIGHTS GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+           {/* Line Chart */}
+           <Card className="border-none shadow-sm bg-white rounded-[2.5rem]">
+              <CardHeader className="p-8">
+                <CardTitle className="text-xl font-black text-gray-800 tracking-tight">Tren Kepuasan Bulanan</CardTitle>
+              </CardHeader>
+              <CardContent className="px-8 pb-8">
+                <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={satisfactionData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {satisfactionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
+                    <LineChart data={timeSeriesData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} />
+                      <YAxis axisLine={false} tickLine={false} />
                       <Tooltip />
-                      <Legend />
-                    </PieChart>
+                      <Line type="monotone" dataKey="puas" stroke="#10B981" strokeWidth={4} dot={{r: 6, fill: '#10B981', strokeWidth: 3, stroke: '#fff'}} />
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
-              ) : (
-                <div className="h-80 flex items-center justify-center text-gray-400">
-                  <p>Belum ada data prediksi</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+           </Card>
 
-          {/* Model Performance Comparison */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Perbandingan Performa Model</CardTitle>
-              <CardDescription>
-                Metrik evaluasi untuk setiap model terlatih
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {models.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={modelPerformanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} />
-                      <Legend />
-                      <Bar dataKey="accuracy" fill="#3b82f6" name="Accuracy" />
-                      <Bar dataKey="precision" fill="#8b5cf6" name="Precision" />
-                      <Bar dataKey="recall" fill="#10b981" name="Recall" />
-                      <Bar dataKey="f1Score" fill="#f59e0b" name="F1-Score" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-80 flex items-center justify-center text-gray-400">
-                  <p>Belum ada model terlatih</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+           {/* AI INSIGHTS */}
+           <Card className="border-none shadow-sm bg-indigo-900 text-white rounded-[2.5rem] p-4">
+              <CardHeader className="p-8 pb-4">
+                <CardTitle className="text-xl font-black flex items-center gap-3">
+                  <Brain className="w-6 h-6 text-indigo-300" /> AI Insights
+                </CardTitle>
+                <CardDescription className="text-indigo-200 font-medium italic">Berdasarkan hasil analisis data terbaru</CardDescription>
+              </CardHeader>
+              <CardContent className="px-8 pb-8 space-y-5">
+                {[
+                  { text: "Tingkat kepuasan menunjukkan tren positif dengan kenaikan stabil sejak Januari.", num: "1" },
+                  { text: "Model Decision Tree memiliki stabilitas prediksi di atas 85% untuk data baru.", num: "2" },
+                  { text: "Fokus pada peningkatan layanan untuk segmen pelanggan di bawah 30 tahun.", num: "3" }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 bg-indigo-800/50 p-4 rounded-2xl border border-indigo-700/50">
+                    <span className="font-black text-indigo-300 text-lg opacity-50">{item.num}</span>
+                    <p className="text-sm font-bold text-indigo-50 leading-relaxed">{item.text}</p>
+                  </div>
+                ))}
+              </CardContent>
+           </Card>
         </div>
 
-        {/* Time Series Trend */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Tren Kepuasan Pelanggan</CardTitle>
-            <CardDescription>
-              Perkembangan tingkat kepuasan pelanggan dari waktu ke waktu
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip formatter={(value: number) => `${value}%`} />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="puas" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    name="Pelanggan Puas (%)"
-                    dot={{ fill: "#10b981", r: 4 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="tidakPuas" 
-                    stroke="#ef4444" 
-                    strokeWidth={2}
-                    name="Pelanggan Tidak Puas (%)"
-                    dot={{ fill: "#ef4444", r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Insights */}
-        <Card className="border-0 shadow-lg bg-blue-50">
-          <CardHeader>
-            <CardTitle>Insight & Rekomendasi</CardTitle>
-            <CardDescription>
-              Analisis dan rekomendasi berdasarkan data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3 text-sm text-gray-700">
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">1</span>
-                <span>
-                  <strong>Tren Positif:</strong> Tingkat kepuasan pelanggan menunjukkan tren meningkat dari bulan ke bulan, 
-                  dengan peningkatan sebesar {satisfiedRate > 70 ? "signifikan" : "moderat"}.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">2</span>
-                <span>
-                  <strong>Akurasi Model:</strong> Model Decision Tree mencapai akurasi {currentModel ? `${(currentModel.accuracy * 100).toFixed(1)}%` : "tinggi"}, 
-                  menunjukkan performa yang {currentModel && currentModel.accuracy > 0.85 ? "sangat baik" : "baik"} dalam prediksi.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">3</span>
-                <span>
-                  <strong>Rekomendasi:</strong> Fokus pada peningkatan frekuensi pembelian pelanggan dengan usia di bawah 30 tahun 
-                  untuk meningkatkan tingkat kepuasan keseluruhan.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-xs">4</span>
-                <span>
-                  <strong>Action Items:</strong> Implementasikan program loyalitas untuk mempertahankan pelanggan yang puas 
-                  dan meningkatkan engagement dengan pelanggan yang tidak puas.
-                </span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Button onClick={() => navigate("/prediction")}>
+        {/* FINAL BUTTONS */}
+        <div className="flex gap-4 pb-10">
+          <Button 
+            onClick={() => navigate("/prediction")}
+            className="flex-1 py-8 rounded-[2rem] bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-100 transition-all hover:scale-[1.01]"
+          >
             Lakukan Prediksi Baru
           </Button>
-          <Button variant="outline" onClick={() => navigate(-1)}>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+            className="px-10 rounded-[2rem] border-gray-200 bg-white font-bold text-gray-500 hover:bg-gray-50"
+          >
             Kembali
           </Button>
         </div>
-      </div>
-    </DashboardLayout>
+      </main>
+    </div>
   );
 }

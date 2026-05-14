@@ -4,253 +4,215 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { useData } from "../context/DataContext";
-import { Network, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+// @ts-ignore
+import makanan1 from "../../assets/makanan1.jpg";
+import { 
+  Network, 
+  AlertCircle, 
+  ZoomIn, 
+  ZoomOut, 
+  Maximize2, 
+  ChevronLeft, 
+  ArrowRight,
+  Info,
+  LogOut
+} from "lucide-react";
 
 export default function Visualization() {
   const { currentModel } = useData();
   const navigate = useNavigate();
   const [zoom, setZoom] = useState(1);
 
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2.5));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.4));
+  const handleReset = () => setZoom(1);
+
   if (!currentModel) {
     return (
-      <DashboardLayout title="Visualisasi Pohon Keputusan">
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-orange-500" />
-                Belum Ada Model
-              </CardTitle>
-              <CardDescription>
-                Silakan latih model terlebih dahulu untuk melihat visualisasi
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate("/training")}>
-                Mulai Training
+      <div className="min-h-screen bg-[#FAFAFA]">
+        {/* HEADER CONSISTENCY */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-md ring-2 ring-orange-50">
+                <img src={makanan1} alt="Logo" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Rumah Makan Nasi Padang</h1>
+                <p className="text-xs text-orange-600 font-bold uppercase tracking-[0.2em]">Decision Tree Intelligence</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-xl mx-auto mt-20 text-center px-6">
+          <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem] p-8 bg-white">
+            <CardContent className="pt-6 space-y-6">
+              <div className="mx-auto w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-orange-500" />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-2xl font-black text-gray-800">Visualisasi Belum Tersedia</CardTitle>
+                <CardDescription className="text-gray-500 font-medium px-10">
+                  Selesaikan pelatihan model terlebih dahulu untuk melihat struktur arsitektur Decision Tree.
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={() => navigate("/training")}
+                className="w-full py-7 rounded-2xl bg-orange-600 hover:bg-orange-700 font-black text-lg shadow-xl shadow-orange-100 transition-all active:scale-95"
+              >
+                Kembali ke Training
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </DashboardLayout>
+        </main>
+      </div>
     );
   }
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
-  const handleReset = () => setZoom(1);
-
-  // Mock decision tree visualization
   const DecisionTreeSVG = () => (
     <svg 
       width="100%" 
-      height="600" 
+      height="650" 
       viewBox="0 0 800 600" 
-      style={{ transform: `scale(${zoom})`, transition: "transform 0.3s" }}
+      className="drop-shadow-sm"
+      style={{ 
+        transform: `scale(${zoom})`, 
+        transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        transformOrigin: "top center"
+      }}
     >
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#CBD5E1" />
+        </marker>
+      </defs>
+
       {/* Root Node */}
       <g>
-        <rect x="350" y="20" width="100" height="60" fill="#3b82f6" rx="8" />
-        <text x="400" y="45" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Purchase
-        </text>
-        <text x="400" y="65" textAnchor="middle" fill="white" fontSize="10">
-          Frequency
-        </text>
+        <rect x="340" y="20" width="120" height="70" fill="#2563EB" rx="16" />
+        <text x="400" y="50" textAnchor="middle" fill="white" fontSize="13" fontWeight="900">FREQ_BELI</text>
+        <text x="400" y="70" textAnchor="middle" fill="white" fontSize="10" opacity="0.8" fontWeight="bold">ROOT NODE</text>
       </g>
 
-      {/* Left Branch */}
-      <line x1="400" y1="80" x2="250" y2="150" stroke="#6b7280" strokeWidth="2" />
-      <text x="320" y="115" fill="#6b7280" fontSize="10">&lt;= 10</text>
+      {/* Branches & Nodes (Sesuai dengan logika sebelumnya) */}
+      <path d="M400 90 L250 160" stroke="#CBD5E1" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
+      <path d="M400 90 L550 160" stroke="#CBD5E1" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
       
       <g>
-        <rect x="200" y="150" width="100" height="60" fill="#8b5cf6" rx="8" />
-        <text x="250" y="175" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Age
-        </text>
-        <text x="250" y="195" textAnchor="middle" fill="white" fontSize="10">
-          Category
-        </text>
+        <rect x="190" y="160" width="120" height="70" fill="#7C3AED" rx="16" />
+        <text x="250" y="195" textAnchor="middle" fill="white" fontSize="13" fontWeight="900">USIA</text>
+      </g>
+      <g>
+        <rect x="490" y="160" width="120" height="70" fill="#7C3AED" rx="16" />
+        <text x="550" y="195" textAnchor="middle" fill="white" fontSize="13" fontWeight="900">GENDER</text>
       </g>
 
-      {/* Left-Left Leaf */}
-      <line x1="250" y1="210" x2="150" y2="280" stroke="#6b7280" strokeWidth="2" />
-      <text x="195" y="245" fill="#6b7280" fontSize="10">&lt;= 30</text>
-      
+      {/* Leaves */}
       <g>
-        <rect x="100" y="280" width="100" height="60" fill="#ef4444" rx="8" />
-        <text x="150" y="305" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Tidak Puas
-        </text>
-        <text x="150" y="325" textAnchor="middle" fill="white" fontSize="9">
-          Samples: 180
-        </text>
+        <rect x="90" y="310" width="120" height="70" fill="#DC2626" rx="16" />
+        <text x="150" y="345" textAnchor="middle" fill="white" fontSize="13" fontWeight="900">TIDAK PUAS</text>
       </g>
-
-      {/* Left-Right Leaf */}
-      <line x1="250" y1="210" x2="350" y2="280" stroke="#6b7280" strokeWidth="2" />
-      <text x="305" y="245" fill="#6b7280" fontSize="10">&gt; 30</text>
-      
       <g>
-        <rect x="300" y="280" width="100" height="60" fill="#10b981" rx="8" />
-        <text x="350" y="305" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Puas
-        </text>
-        <text x="350" y="325" textAnchor="middle" fill="white" fontSize="9">
-          Samples: 220
-        </text>
-      </g>
-
-      {/* Right Branch */}
-      <line x1="400" y1="80" x2="550" y2="150" stroke="#6b7280" strokeWidth="2" />
-      <text x="480" y="115" fill="#6b7280" fontSize="10">&gt; 10</text>
-      
-      <g>
-        <rect x="500" y="150" width="100" height="60" fill="#8b5cf6" rx="8" />
-        <text x="550" y="175" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Gender
-        </text>
-        <text x="550" y="195" textAnchor="middle" fill="white" fontSize="10">
-          Category
-        </text>
-      </g>
-
-      {/* Right-Left Leaf */}
-      <line x1="550" y1="210" x2="450" y2="280" stroke="#6b7280" strokeWidth="2" />
-      <text x="495" y="245" fill="#6b7280" fontSize="10">Female</text>
-      
-      <g>
-        <rect x="400" y="280" width="100" height="60" fill="#10b981" rx="8" />
-        <text x="450" y="305" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Puas
-        </text>
-        <text x="450" y="325" textAnchor="middle" fill="white" fontSize="9">
-          Samples: 285
-        </text>
-      </g>
-
-      {/* Right-Right Leaf */}
-      <line x1="550" y1="210" x2="650" y2="280" stroke="#6b7280" strokeWidth="2" />
-      <text x="605" y="245" fill="#6b7280" fontSize="10">Male</text>
-      
-      <g>
-        <rect x="600" y="280" width="100" height="60" fill="#10b981" rx="8" />
-        <text x="650" y="305" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-          Puas
-        </text>
-        <text x="650" y="325" textAnchor="middle" fill="white" fontSize="9">
-          Samples: 235
-        </text>
+        <rect x="290" y="310" width="120" height="70" fill="#059669" rx="16" />
+        <text x="350" y="345" textAnchor="middle" fill="white" fontSize="13" fontWeight="900">PUAS</text>
       </g>
     </svg>
   );
 
   return (
-    <DashboardLayout title="Visualisasi Pohon Keputusan">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Model Info */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-purple-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="w-5 h-5" />
-              {currentModel.modelName}
-            </CardTitle>
-            <CardDescription>
-              Visualisasi interaktif pohon keputusan • Akurasi: {(currentModel.accuracy * 100).toFixed(2)}%
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        {/* Zoom Controls */}
-        <Card className="border-0 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center gap-4">
-              <Button onClick={handleZoomOut} variant="outline" size="sm">
-                <ZoomOut className="w-4 h-4" />
-              </Button>
-              <span className="text-sm font-medium text-gray-700 w-20 text-center">
-                {Math.round(zoom * 100)}%
-              </span>
-              <Button onClick={handleZoomIn} variant="outline" size="sm">
-                <ZoomIn className="w-4 h-4" />
-              </Button>
-              <Button onClick={handleReset} variant="outline" size="sm">
-                <Maximize2 className="w-4 h-4 mr-2" />
-                Reset
-              </Button>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      {/* 1. HEADER - IDENTIK DENGAN TRAINING & PREDICTION */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-md ring-2 ring-orange-50">
+              <img src={makanan1} alt="Logo" className="h-full w-full object-cover" />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Decision Tree Visualization */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle>Struktur Pohon Keputusan</CardTitle>
-            <CardDescription>
-              Pohon keputusan menampilkan alur klasifikasi berdasarkan fitur-fitur pelanggan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-50 rounded-lg p-6 overflow-auto">
-              <div className="flex justify-center">
-                <DecisionTreeSVG />
-              </div>
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Rumah Makan Nasi Padang</h1>
+              <p className="text-xs text-orange-600 font-bold uppercase tracking-[0.2em]">Decision Tree Intelligence</p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Legend */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-base">Keterangan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-500 rounded"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Root Node</p>
-                  <p className="text-xs text-gray-500">Node awal untuk klasifikasi</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-purple-500 rounded"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Decision Node</p>
-                  <p className="text-xs text-gray-500">Node keputusan berdasarkan fitur</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500 rounded"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Leaf - Puas</p>
-                  <p className="text-xs text-gray-500">Hasil klasifikasi: Pelanggan Puas</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-red-500 rounded"></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Leaf - Tidak Puas</p>
-                  <p className="text-xs text-gray-500">Hasil klasifikasi: Pelanggan Tidak Puas</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Button onClick={() => navigate("/prediction")}>
-            Lanjut ke Prediksi
-          </Button>
-          <Button variant="outline" onClick={() => navigate("/evaluation")}>
-            Lihat Evaluasi
-          </Button>
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            Kembali
-          </Button>
+          </div>
+          <div className="flex items-center gap-3">
+             <Button 
+                variant="ghost" 
+                className="rounded-xl gap-2 text-gray-500 font-semibold hover:bg-gray-100 transition-all" 
+                onClick={() => navigate(-1)}
+             >
+                <ChevronLeft className="w-4 h-4" /> Kembali
+             </Button>
+             <Button 
+                variant="outline" 
+                className="rounded-xl border-gray-200 gap-2 text-gray-600 font-semibold hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm" 
+                onClick={() => navigate('/login')}
+             >
+                <LogOut className="w-4 h-4" /> Logout
+             </Button>
+          </div>
         </div>
-      </div>
-    </DashboardLayout>
+      </header>
+
+      <main className="max-w-6xl mx-auto p-6 md:py-12 space-y-8">
+        
+        {/* MODEL INFO STRIP */}
+        <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-50 rounded-2xl">
+              <Network className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-gray-800 leading-tight">{currentModel.modelName}</h2>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Visualisasi Arsitektur</p>
+            </div>
+          </div>
+
+          {/* ZOOM CONTROLS */}
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+              <Button onClick={handleZoomOut} variant="ghost" size="icon" className="rounded-xl hover:bg-white hover:shadow-sm h-9 w-9">
+                <ZoomOut className="w-4 h-4 text-gray-600" />
+              </Button>
+              <div className="px-4 text-xs font-black text-gray-500 w-16 text-center">
+                {Math.round(zoom * 100)}%
+              </div>
+              <Button onClick={handleZoomIn} variant="ghost" size="icon" className="rounded-xl hover:bg-white hover:shadow-sm h-9 w-9">
+                <ZoomIn className="w-4 h-4 text-gray-600" />
+              </Button>
+              <div className="w-px h-4 bg-gray-200 mx-1" />
+              <Button onClick={handleReset} variant="ghost" className="rounded-xl font-bold text-xs gap-2 hover:bg-white hover:shadow-sm h-9">
+                <Maximize2 className="w-3 h-3" /> Fit
+              </Button>
+          </div>
+        </div>
+
+        {/* TREE CANVAS */}
+        <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] bg-white rounded-[3rem] overflow-hidden">
+          <CardContent className="p-10 pt-10">
+            <div className="bg-[#F8FAFC] rounded-[2.5rem] border-2 border-dashed border-gray-100 p-8 min-h-[600px] flex justify-center overflow-hidden relative cursor-grab active:cursor-grabbing">
+              <DecisionTreeSVG />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* BOTTOM NAV */}
+        <div className="flex flex-col md:flex-row gap-4 pt-4">
+          <Button 
+            onClick={() => navigate("/prediction")}
+            className="flex-1 py-8 rounded-[2rem] bg-gray-900 hover:bg-black text-white font-black text-lg shadow-xl shadow-gray-200 transition-all hover:scale-[1.02]"
+          >
+            Mulai Prediksi <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+          <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/evaluation")}
+              className="py-8 px-8 rounded-[2rem] border-gray-200 font-bold text-gray-600 hover:bg-white hover:shadow-md transition-all"
+            >
+              Cek Evaluasi
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -24,20 +24,32 @@ export async function request(endpoint: string, options: RequestInit = {}) {
 }
 
 export const api = {
+  // ── Auth ──────────────────────────────────────────────────
   login: (username: string, password: string) =>
     request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
 
+  register: (username: string, password: string) =>
+    request("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+
+  // ── Survey ────────────────────────────────────────────────
   submitSurvey: (data: object) =>
     request("/survey/submit", { method: "POST", body: JSON.stringify(data) }),
 
   getSurveyHistory: (email: string) =>
     request(`/survey/history/${email}`),
 
+  getMyHistory: () =>
+    request("/survey/my-history"),
+
   getAllSurveys: () => request("/survey/all"),
 
+  // ── Dataset & Training ────────────────────────────────────
   uploadDataset: (file: File) => {
     const form = new FormData();
     form.append("file", file);
