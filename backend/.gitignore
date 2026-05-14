@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+kepuasan.db
+*.pyc
+saved_models/
+uploads/
