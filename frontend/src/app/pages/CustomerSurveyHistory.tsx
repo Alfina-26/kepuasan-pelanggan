@@ -16,7 +16,8 @@ import {
   UtensilsCrossed,
   ChevronLeft,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  AlertCircle,
 } from "lucide-react";
 
 // ── INTERFACE ──
@@ -28,18 +29,17 @@ interface Survey {
   phone: string;
   location: string;
   feedback: string;
-  ratings: {
-    foodQuality: number;
-    cleanliness: number;
-    serviceSpeed: number;
-    staffFriendliness: number;
-    priceValue: number;
-    ambiance: number;
-    overallSatisfaction: number;
-  };
+  foodQuality: number;
+  cleanliness: number;
+  serviceSpeed: number;
+  staffFriendliness: number;
+  priceValue: number;
+  ambiance: number;
+  overallSatisfaction: number;
+  ratings?: any;
 }
 
-// ── DASHBOARD LAYOUT (Sinkron dengan CustomerSurvey) ──
+// ── DASHBOARD LAYOUT ──
 function DashboardLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -57,8 +57,8 @@ function DashboardLayout({ children }: { children: ReactNode }) {
               <span className="text-xs text-gray-500 font-medium tracking-wider uppercase">History & Feedback</span>
             </div>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => { logout(); navigate("/login"); }}
             className="rounded-xl border-gray-200 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
@@ -77,29 +77,45 @@ export default function CustomerSurveyHistory() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSurveys();
-  }, [user]);
+  }, []);
 
   const loadSurveys = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await api.getAllSurveys();
-      const allSurveys: Survey[] = res.surveys || [];
-      
-      // Filter berdasarkan email atau nama (Disesuaikan dengan logic auth Anda)
-      const mySurveys = user?.username
-        ? allSurveys.filter((s) => s.email === user.username)
-        : allSurveys;
-
+      // ✅ FIX: Pakai getMyHistory() — backend filter by user_id via JWT token
+      // Tidak perlu filter manual di frontend yang rawan salah
+      const res = await api.getMyHistory();
+      const mySurveys: Survey[] = res.surveys || [];
       setSurveys(mySurveys.sort((a, b) => b.id - a.id));
-    } catch (err) {
+    } catch (err: any) {
+      // Jika 401, artinya token tidak valid / expired
+      if (err.message?.includes("401") || err.message?.includes("Login")) {
+        setError("Sesi Anda telah berakhir. Silakan login ulang.");
+      } else {
+        setError("Gagal memuat riwayat survei.");
+      }
       setSurveys([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Ambil nilai rating dari field langsung atau dari nested ratings object
+  // karena backend bisa return keduanya
+  const getRatingValue = (survey: Survey, key: keyof Survey): number => {
+    const direct = survey[key];
+    if (typeof direct === "number") return direct;
+    if (survey.ratings && typeof survey.ratings[key] === "number") return survey.ratings[key];
+    return 0;
+  };
+
+  const getOverallRating = (survey: Survey) =>
+    getRatingValue(survey, "overallSatisfaction");
 
   const getSatisfactionLevel = (rating: number) => {
     if (rating >= 4.5) return { label: "Sangat Puas", color: "bg-green-500" };
@@ -110,7 +126,8 @@ export default function CustomerSurveyHistory() {
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString("id-ID", {
-      day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+      day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
     });
   };
 
@@ -125,10 +142,26 @@ export default function CustomerSurveyHistory() {
     </div>
   );
 
+  // Label Indonesia untuk masing-masing rating key
+  const ratingLabels: Record<string, string> = {
+    foodQuality: "Rasa Makanan",
+    cleanliness: "Kebersihan",
+    serviceSpeed: "Kecepatan Layanan",
+    staffFriendliness: "Keramahan Staff",
+    priceValue: "Harga",
+    ambiance: "Suasana",
+    overallSatisfaction: "Kepuasan Keseluruhan",
+  };
+
+  const ratingKeys: (keyof Survey)[] = [
+    "foodQuality", "cleanliness", "serviceSpeed",
+    "staffFriendliness", "priceValue", "ambiance", "overallSatisfaction",
+  ];
+
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6 pb-10">
-        
+
         {/* Tombol Navigasi */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate(-1)} className="text-gray-500 hover:text-[#F5A623]">
@@ -146,7 +179,9 @@ export default function CustomerSurveyHistory() {
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-black text-[#333] tracking-tight">Riwayat Penilaian</h2>
-            <p className="text-gray-400 font-medium">Terima kasih telah membantu kami berkembang</p>
+            <p className="text-gray-400 font-medium">
+              Terima kasih{user?.username ? `, ${user.username}` : ""} telah membantu kami berkembang
+            </p>
           </div>
           <div className="text-right">
             <span className="block text-4xl font-black text-[#F5A623]">{surveys.length}</span>
@@ -154,23 +189,49 @@ export default function CustomerSurveyHistory() {
           </div>
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span className="font-medium">{error}</span>
+            {error.includes("login") && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate("/login")}
+                className="ml-auto border-red-300 text-red-600 hover:bg-red-100"
+              >
+                Login Ulang
+              </Button>
+            )}
+          </div>
+        )}
+
         {loading ? (
-          <div className="py-20 text-center text-gray-400 font-medium">Memuat riwayat...</div>
-        ) : surveys.length === 0 ? (
+          <div className="py-20 text-center text-gray-400 font-medium animate-pulse">
+            Memuat riwayat...
+          </div>
+        ) : !error && surveys.length === 0 ? (
           <Card className="border-2 border-dashed border-gray-200 bg-transparent shadow-none">
             <CardContent className="py-20 text-center">
               <UtensilsCrossed className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-600">Belum Ada Riwayat</h3>
               <p className="text-gray-400 mt-2">Anda belum pernah mengisi survei kepuasan.</p>
+              <Button
+                onClick={() => navigate("/customer-survey")}
+                className="mt-6 bg-[#F5A623] hover:bg-[#d98c1d] rounded-xl font-bold"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Isi Survei Sekarang
+              </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* List Sebelah Kiri */}
+
+            {/* List Kiri */}
             <div className="lg:col-span-5 space-y-4">
               {surveys.map((survey) => {
-                const overall = survey.ratings?.overallSatisfaction || 0;
+                const overall = getOverallRating(survey);
                 const satisfaction = getSatisfactionLevel(overall);
                 const isActive = selectedSurvey?.id === survey.id;
 
@@ -178,23 +239,29 @@ export default function CustomerSurveyHistory() {
                   <Card
                     key={survey.id}
                     className={`cursor-pointer transition-all border-2 rounded-2xl ${
-                      isActive ? "border-[#F5A623] bg-orange-50/30 shadow-md" : "border-transparent hover:border-gray-200"
+                      isActive
+                        ? "border-[#F5A623] bg-orange-50/30 shadow-md"
+                        : "border-transparent hover:border-gray-200"
                     }`}
                     onClick={() => setSelectedSurvey(survey)}
                   >
                     <CardContent className="p-5">
                       <div className="flex justify-between items-start mb-3">
-                        <Badge className={`${satisfaction.color} text-white hover:${satisfaction.color} border-none px-3 py-1 rounded-lg`}>
+                        <Badge
+                          className={`${satisfaction.color} text-white hover:${satisfaction.color} border-none px-3 py-1 rounded-lg`}
+                        >
                           {satisfaction.label}
                         </Badge>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                           {formatDate(survey.timestamp)}
                         </span>
                       </div>
-                      <h4 className="font-bold text-gray-800 text-lg">{survey.location || "Kunjungan Restoran"}</h4>
+                      <h4 className="font-bold text-gray-800 text-lg">
+                        {survey.location || "Kunjungan Restoran"}
+                      </h4>
                       <div className="mt-4 flex items-center justify-between">
-                         <RatingDisplay rating={overall} />
-                         <Eye className={`w-5 h-5 ${isActive ? "text-[#F5A623]" : "text-gray-300"}`} />
+                        <RatingDisplay rating={overall} />
+                        <Eye className={`w-5 h-5 ${isActive ? "text-[#F5A623]" : "text-gray-300"}`} />
                       </div>
                     </CardContent>
                   </Card>
@@ -202,7 +269,7 @@ export default function CustomerSurveyHistory() {
               })}
             </div>
 
-            {/* Detail Sebelah Kanan */}
+            {/* Detail Kanan */}
             <div className="lg:col-span-7">
               {selectedSurvey ? (
                 <Card className="border-none shadow-2xl rounded-3xl sticky top-24 overflow-hidden">
@@ -211,7 +278,7 @@ export default function CustomerSurveyHistory() {
                     <CardTitle className="text-2xl font-black text-[#333]">Detail Feedback</CardTitle>
                     <CardDescription>ID Referensi: #SRV-{selectedSurvey.id}</CardDescription>
                   </CardHeader>
-                  
+
                   <CardContent className="p-8 space-y-8">
                     {/* User Info */}
                     <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl">
@@ -223,6 +290,18 @@ export default function CustomerSurveyHistory() {
                         <p className="text-[10px] font-bold text-gray-400 uppercase">Kontak</p>
                         <p className="font-medium text-gray-600 text-sm">{selectedSurvey.email}</p>
                       </div>
+                      {selectedSurvey.phone && (
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Telepon</p>
+                          <p className="font-medium text-gray-600 text-sm">{selectedSurvey.phone}</p>
+                        </div>
+                      )}
+                      {selectedSurvey.location && (
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Lokasi</p>
+                          <p className="font-medium text-gray-600 text-sm">{selectedSurvey.location}</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Ratings Grid */}
@@ -231,10 +310,15 @@ export default function CustomerSurveyHistory() {
                         <Star className="w-4 h-4 text-[#F5A623]" /> Skor Penilaian
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                        {Object.entries(selectedSurvey.ratings).map(([key, val]) => (
-                          <div key={key} className="flex justify-between items-center border-b border-gray-50 pb-2">
-                            <span className="text-sm text-gray-500 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                            <RatingDisplay rating={val} />
+                        {ratingKeys.map((key) => (
+                          <div
+                            key={key}
+                            className="flex justify-between items-center border-b border-gray-50 pb-2"
+                          >
+                            <span className="text-sm text-gray-500">
+                              {ratingLabels[key as string] || key}
+                            </span>
+                            <RatingDisplay rating={getRatingValue(selectedSurvey, key)} />
                           </div>
                         ))}
                       </div>
@@ -258,7 +342,6 @@ export default function CustomerSurveyHistory() {
                 </div>
               )}
             </div>
-
           </div>
         )}
       </div>
